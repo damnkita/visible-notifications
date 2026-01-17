@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from app.health.readiness_check_usecase import ReadinessCheckUseCase
+
 router = APIRouter()
 
 
@@ -10,5 +12,5 @@ async def healthy() -> JSONResponse:
 
 
 @router.get("/readyz")
-async def ready() -> JSONResponse:
+async def ready(use_case: ReadinessCheckUseCase) -> JSONResponse:
     return JSONResponse(content={"ready": True})
