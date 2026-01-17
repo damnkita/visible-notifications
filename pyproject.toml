@@ -5,12 +5,15 @@ description = "A tool to react to an event stream with notifications in a config
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.18.1",
     "dishka>=1.7.2",
     "fastapi[standard]>=0.128.0",
+    "httptools>=0.7.1",
     "httpx>=0.28.1",
     "pydantic-settings>=2.12.0",
     "pytest>=9.0.2",
     "ruff>=0.14.13",
+    "sqlmodel>=0.0.31",
     "uvloop>=0.22.1",
 ]
 

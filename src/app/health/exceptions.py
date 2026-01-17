@@ -1,9 +1,13 @@
-from app.exceptions import InternalApplicationException
+from http import HTTPStatus
+
+from app.exceptions import WebApplicationException
 
 
-class DependencyNotReadyException(InternalApplicationException):
+class DependencyNotReadyException(WebApplicationException):
     def __init__(self, dependency_name: str) -> None:
         super().__init__(
-            "dependency_not_ready", f"Dependency not ready: {dependency_name}"
+            "E_DEPENDENCY_NOT_READY",
+            f"Dependency not ready: {dependency_name}",
+            HTTPStatus.SERVICE_UNAVAILABLE,
         )
         self.dependency_name = dependency_name

@@ -1,19 +1,14 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-from infrastructure.fastapi.main import Mode, create_api
+from infrastructure.fastapi.main import Env, create_api
 
-if __name__ == "__main__":
-    import uvicorn
 
-    class APISettings(BaseSettings):
-        mode: Mode = Field(default=Mode.PROD)
+class APISettings(BaseSettings):
+    env: Env = Field(default=Env.PROD)
 
-    settings = APISettings()
 
-    uvicorn.run(
-        app=create_api(settings.mode),
-        port=8000,
-        reload=False,
-        loop="uvloop",
-    )
+settings = APISettings()
+print(settings.model_dump_json())
+
+app = create_api(settings.env)

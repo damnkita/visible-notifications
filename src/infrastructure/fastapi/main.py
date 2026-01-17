@@ -14,10 +14,10 @@ from app.exceptions import (
     WebApplicationException,
 )
 from infrastructure.infrastructure_provider import InfrastructureProvider
-from presentation.api.health.controller import router as health_router
+from presentation.api.health.health_handlers import router as health_router
 
 
-class Mode(str, Enum):
+class Env(str, Enum):
     PROD = "prod"
     DEV = "dev"
     LOCAL = "local"
@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     print("I die")
 
 
-def create_api(mode: Mode = Mode.PROD) -> FastAPI:
+def create_api(env: Env = Env.PROD) -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     app.include_router(health_router)
 
@@ -41,7 +41,7 @@ def create_api(mode: Mode = Mode.PROD) -> FastAPI:
 
     @app.exception_handler(ApplicationException)
     async def exception_handler(request: Request, e: InternalApplicationException):
-        if mode is Mode.PROD and isinstance(e, InternalApplicationException):
+        if env is Env.PROD and isinstance(e, InternalApplicationException):
             return JSONResponse(
                 content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
