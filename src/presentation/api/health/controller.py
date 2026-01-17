@@ -1,3 +1,5 @@
+from dishka import FromDishka
+from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
@@ -12,5 +14,7 @@ async def healthy() -> JSONResponse:
 
 
 @router.get("/readyz")
-async def ready(use_case: ReadinessCheckUseCase) -> JSONResponse:
+@inject
+async def ready(use_case: FromDishka[ReadinessCheckUseCase]) -> JSONResponse:
+    await use_case.handle(None)
     return JSONResponse(content={"ready": True})
