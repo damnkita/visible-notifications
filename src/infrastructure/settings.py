@@ -1,0 +1,31 @@
+from enum import Enum
+
+from dishka import Provider, Scope, provide
+from pydantic import Field, PostgresDsn
+from pydantic_settings import BaseSettings
+
+
+class Env(str, Enum):
+    PROD = "prod"
+    DEV = "dev"
+    LOCAL = "local"
+    TEST = "test"
+
+
+class APISettings(BaseSettings):
+    env: Env = Field(default=Env.PROD)
+    database_url_sync: PostgresDsn = PostgresDsn(
+        "postgresql+psycopg2://postgres:postgres@localhost:5432/postgres"
+    )
+    database_url_async: PostgresDsn = PostgresDsn(
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"
+    )
+
+
+settings = APISettings()
+
+
+class SettingsProvider(Provider):
+    @provide(scope=Scope.APP)
+    def settings(self) -> APISettings:
+        return settings

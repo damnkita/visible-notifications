@@ -1,11 +1,10 @@
-import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-from domain import pipka  # noqa: F401
+from infrastructure.settings import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,8 +26,9 @@ target_metadata = SQLModel.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-config.set_section_option(
-    "sqlalchemy", "url", os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pwd@host:5432/db")
+config.set_main_option(
+    "sqlalchemy.url",
+    str(settings.database_url_sync),
 )
 
 

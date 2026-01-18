@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/visible_notify
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
     depends_on:
       db:
         condition: service_healthy
@@ -17,17 +17,12 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=visible_notify
+      - POSTGRES_DB=postgres
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d visible_notify"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
-volumes:
-  postgres_data:

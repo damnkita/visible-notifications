@@ -1,8 +1,36 @@
+from collections.abc import AsyncIterable
+
 from dishka import Provider, Scope, provide
+from sqlalchemy import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.health.readiness_check_usecase import DatabaseChecker
-from infrastructure.database.dummy_db_checker import DummyDBChecker
+from infrastructure.database.postgres.postgres_db_checker import PostgresDBChecker
+from infrastructure.database.sqlmodel.engine import (
+    create_async_engine,
+    create_sync_engine,
+)
+from infrastructure.settings import APISettings
 
 
 class InfrastructureProvider(Provider):
-    services = provide(DummyDBChecker, provides=DatabaseChecker, scope=Scope.REQUEST)
+    scope = Scope.APP
+
+    @provide(scope=Scope.REQUEST)
+    def get_db_checker(self, async_session: AsyncSession) -> DatabaseChecker:
+        return PostgresDBChecker(async_session)
+
+    @provide
+    def get_sync_engine(self, settings: APISettings) -> Engine:
+        return create_sync_engine(settings)
+
+    @provide
+    def get_async_engine(self, settings: APISettings) -> AsyncEngine:
+        return create_async_engine(settings)
+
+    @provide(scope=Scope.REQUEST)
+    async def get_async_session(
+        self, engine: AsyncEngine
+    ) -> AsyncIterable[AsyncSession]:
+        async with AsyncSession(engine) as session:
+            yield session

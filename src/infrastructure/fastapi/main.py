@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from enum import Enum
 from http import HTTPStatus
 
 from dishka import make_async_container
@@ -14,34 +13,32 @@ from app.exceptions import (
     WebApplicationException,
 )
 from infrastructure.infrastructure_provider import InfrastructureProvider
+from infrastructure.settings import Env, SettingsProvider
 from presentation.api.health.health_handlers import router as health_router
-
-
-class Env(str, Enum):
-    PROD = "prod"
-    DEV = "dev"
-    LOCAL = "local"
-    TEST = "test"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("I start")
     yield
     await app.state.dishka_container.close()
-    print("I die")
 
 
-def create_api(env: Env = Env.PROD) -> FastAPI:
+def create_api() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     app.include_router(health_router)
 
-    container = make_async_container(AppProvider(), InfrastructureProvider())
+    settings_provider = SettingsProvider()
+
+    container = make_async_container(
+        settings_provider, AppProvider(), InfrastructureProvider()
+    )
     setup_dishka(container, app)
+
+    settings = settings_provider.settings()
 
     @app.exception_handler(ApplicationException)
     async def exception_handler(request: Request, e: InternalApplicationException):
-        if env is Env.PROD and isinstance(e, InternalApplicationException):
+        if settings.env is Env.PROD and isinstance(e, InternalApplicationException):
             return JSONResponse(
                 content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

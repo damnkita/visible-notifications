@@ -11,7 +11,7 @@ router = APIRouter()
 
 @dataclass
 class HealthcheckResponse:
-    ok: bool = True
+    status: str = "ok"
 
 
 @router.get("/healthz/live")
