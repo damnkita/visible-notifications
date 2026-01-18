@@ -8,7 +8,7 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.persistence.event_repository import EventRepository
+from app.events import SaveEventsRequest, SaveEventsUseCase
 from domain import Event
 
 router = APIRouter()
@@ -41,7 +41,7 @@ class PostEventsResponse(BaseModel):
 @inject
 async def post(
     events: list[EventDTO | Any],
-    events_repo: FromDishka[EventRepository],
+    save_events: FromDishka[SaveEventsUseCase],
 ) -> PostEventsResponse:
     domain_events: list[Event] = []
     for event in events:
@@ -51,5 +51,5 @@ async def post(
         except ValueError:
             continue
 
-    await events_repo.save_all(domain_events)
-    return PostEventsResponse(accepted=len(domain_events))
+    result = await save_events.handle(SaveEventsRequest(events=domain_events))
+    return PostEventsResponse(accepted=result.saved_count)

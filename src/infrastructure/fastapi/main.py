@@ -70,8 +70,13 @@ def create_api(envconfig: EnvConfig, dependencies_providers: list[Provider]) -> 
     @app.exception_handler(Exception)
     async def uncaught_exception_handler(request: Request, e: Exception):
         print("UNHANDLED EXCEPTION!")  # todo replace with a structured logger
+        if envconfig.env is Env.PROD:
+            return JSONResponse(
+                content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
         return JSONResponse(
-            content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
+            content={"code": "E_ERR_UNKNOWN", "reason": str(e)},
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 

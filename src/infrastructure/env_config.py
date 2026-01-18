@@ -1,7 +1,7 @@
 from enum import Enum
 
 from dishka import Provider, Scope, provide
-from pydantic import Field, PostgresDsn
+from pydantic import Field, PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings
 
 
@@ -20,6 +20,7 @@ class EnvConfig(BaseSettings):
     database_url_async: PostgresDsn = PostgresDsn(
         "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"
     )
+    redis_url: RedisDsn = RedisDsn("redis://localhost:6379/0")
 
 
 class SettingsProvider(Provider):

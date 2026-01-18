@@ -4,10 +4,9 @@ import pytest
 from dishka import Provider, Scope, provide
 from fastapi.testclient import TestClient
 from pydantic import PostgresDsn
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from infrastructure.database.sqlalchemy.engine import create_async_engine
 from infrastructure.env_config import EnvConfig
 from infrastructure.fastapi.main import create_api, get_dependencies_providers
 

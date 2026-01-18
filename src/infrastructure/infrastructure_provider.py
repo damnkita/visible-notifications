@@ -1,18 +1,22 @@
 from collections.abc import AsyncIterable
 
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.health.readiness_check_usecase import DatabaseChecker
 from app.persistence.event_repository import EventRepository
+from app.queue import EventQueue
 from infrastructure.database.persistence.sqla_event_repository import (
     SQLAEventRepository,
 )
 from infrastructure.database.postgres.postgres_db_checker import PostgresDBChecker
-from infrastructure.database.sqlalchemy.engine import (
-    create_async_engine,
-)
 from infrastructure.env_config import EnvConfig
+from infrastructure.taskiq import TaskiqEventQueue
 
 
 class InfrastructureProvider(Provider):
@@ -26,13 +30,21 @@ class InfrastructureProvider(Provider):
     def get_async_engine(self, settings: EnvConfig) -> AsyncEngine:
         return create_async_engine(str(settings.database_url_async))
 
+    @provide(scope=Scope.APP)
+    def get_session_factory(
+        self, engine: AsyncEngine
+    ) -> async_sessionmaker[AsyncSession]:
+        return async_sessionmaker(engine, expire_on_commit=False)
+
     @provide(scope=Scope.REQUEST)
     async def get_async_session(
-        self, engine: AsyncEngine
+        self, session_factory: async_sessionmaker[AsyncSession]
     ) -> AsyncIterable[AsyncSession]:
-        async with AsyncSession(engine) as session:
+        async with session_factory() as session, session.begin():
             yield session
 
     repositories = provide(
         SQLAEventRepository, provides=EventRepository, scope=Scope.REQUEST
     )
+
+    queues = provide(TaskiqEventQueue, provides=EventQueue, scope=Scope.REQUEST)
