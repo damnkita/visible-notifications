@@ -8,7 +8,6 @@ from app.health.readiness_check_usecase import DatabaseChecker
 from infrastructure.database.postgres.postgres_db_checker import PostgresDBChecker
 from infrastructure.database.sqlmodel.engine import (
     create_async_engine,
-    create_sync_engine,
 )
 from infrastructure.settings import APISettings
 
@@ -19,10 +18,6 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_db_checker(self, async_session: AsyncSession) -> DatabaseChecker:
         return PostgresDBChecker(async_session)
-
-    @provide
-    def get_sync_engine(self, settings: APISettings) -> Engine:
-        return create_sync_engine(settings)
 
     @provide
     def get_async_engine(self, settings: APISettings) -> AsyncEngine:

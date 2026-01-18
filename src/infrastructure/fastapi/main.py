@@ -12,6 +12,7 @@ from app.exceptions import (
     InternalApplicationException,
     WebApplicationException,
 )
+from infrastructure.database.migrations.apply_migrations import update_head
 from infrastructure.infrastructure_provider import InfrastructureProvider
 from infrastructure.settings import Env, SettingsProvider
 from presentation.api.health.health_handlers import router as health_router
@@ -19,6 +20,7 @@ from presentation.api.health.health_handlers import router as health_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await update_head()
     yield
     await app.state.dishka_container.close()
 

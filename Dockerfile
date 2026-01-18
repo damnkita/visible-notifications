@@ -25,4 +25,4 @@ WORKDIR /app/src
 
 EXPOSE 8000
 
-CMD ["fastapi", "run", "--entrypoint", "api:app"]
+CMD ["fastapi", "run", "--entrypoint", "entrypoint.api:app"]
