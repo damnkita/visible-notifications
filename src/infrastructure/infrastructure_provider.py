@@ -1,7 +1,6 @@
 from collections.abc import AsyncIterable
 
 from dishka import Provider, Scope, provide
-from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.health.readiness_check_usecase import DatabaseChecker

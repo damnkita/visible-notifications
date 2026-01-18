@@ -20,7 +20,9 @@ from presentation.api.health.health_handlers import router as health_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print("Migrations start")
     await update_head()
+    print("Migrations end")
     yield
     await app.state.dishka_container.close()
 
