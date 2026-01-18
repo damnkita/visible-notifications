@@ -1,8 +1,8 @@
 """Initial
 
-Revision ID: 3956115c32d9
+Revision ID: 4ed2c092b107
 Revises: 
-Create Date: 2026-01-18 04:09:48.910076
+Create Date: 2026-01-18 04:30:09.588231
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3956115c32d9'
+revision: str = '4ed2c092b107'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,7 +29,7 @@ def upgrade() -> None:
     sa.Column('event_date', sa.Date(), nullable=False),
     sa.Column('properties', sa.JSON(), nullable=False),
     sa.Column('user_traits', sa.JSON(), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
+    sa.PrimaryKeyConstraint('id', 'event_date'),
     postgresql_partition_by='RANGE (event_date)'
     )
     op.create_table('notifications',

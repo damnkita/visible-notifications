@@ -15,6 +15,6 @@ class Event(Base):
     user_id: Mapped[str] = mapped_column(String)
     type: Mapped[str] = mapped_column(String)
     event_timestamp: Mapped[datetime] = mapped_column(DateTime)
-    event_date: Mapped[date] = mapped_column(Date)
+    event_date: Mapped[date] = mapped_column(Date, primary_key=True)
     properties: Mapped[dict] = mapped_column(JSON)
     user_traits: Mapped[dict] = mapped_column(JSON)

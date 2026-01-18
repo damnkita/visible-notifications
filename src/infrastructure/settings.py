@@ -14,6 +14,9 @@ class Env(str, Enum):
 
 class APISettings(BaseSettings):
     env: Env = Field(default=Env.PROD)
+    database_url_sync: PostgresDsn = PostgresDsn(
+        "postgresql+psycopg2://postgres:postgres@localhost:5432/postgres"
+    )
     database_url_async: PostgresDsn = PostgresDsn(
         "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"
     )
