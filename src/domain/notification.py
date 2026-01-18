@@ -1,7 +1,10 @@
 from enum import Enum
 from uuid import UUID
 
-from sqlmodel import AutoString, Field, SQLModel
+from sqlalchemy import Integer, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
+
+from domain.base import Base
 
 
 class NotificationStatus(str, Enum):
@@ -11,11 +14,13 @@ class NotificationStatus(str, Enum):
     SUPPRESSED = "suppressed"
 
 
-class Notification(SQLModel, table=True):
-    id: UUID = Field(default=None, primary_key=True)
-    type: str
-    trigger: str
-    user_id: str
-    status: NotificationStatus = Field(sa_type=AutoString)
-    retries: int
-    suppressed_because: str | None
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    type: Mapped[str] = mapped_column(String)
+    trigger: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String)
+    status: Mapped[NotificationStatus] = mapped_column(String)
+    retries: Mapped[int] = mapped_column(Integer)
+    suppressed_because: Mapped[str | None] = mapped_column(String, nullable=True)

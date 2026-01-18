@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.health.readiness_check_usecase import DatabaseChecker
 from infrastructure.database.postgres.postgres_db_checker import PostgresDBChecker
-from infrastructure.database.sqlmodel.engine import (
+from infrastructure.database.sqlalchemy.engine import (
     create_async_engine,
 )
 from infrastructure.settings import APISettings

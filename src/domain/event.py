@@ -1,15 +1,20 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import JSON
-from sqlmodel import Field, SQLModel
+from sqlalchemy import JSON, Date, DateTime, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
+
+from domain.base import Base
 
 
-class Event(SQLModel, table=True):
-    id: UUID = Field(default=None, primary_key=True)
-    user_id: str
-    type: str
-    event_timestamp: datetime
-    event_date: date
-    properties: dict = Field(sa_type=JSON)
-    user_traits: dict = Field(sa_type=JSON)
+class Event(Base):
+    __tablename__ = "events"
+    __table_args__ = {"postgresql_partition_by": "RANGE (event_date)"}
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    user_id: Mapped[str] = mapped_column(String)
+    type: Mapped[str] = mapped_column(String)
+    event_timestamp: Mapped[datetime] = mapped_column(DateTime)
+    event_date: Mapped[date] = mapped_column(Date)
+    properties: Mapped[dict] = mapped_column(JSON)
+    user_traits: Mapped[dict] = mapped_column(JSON)

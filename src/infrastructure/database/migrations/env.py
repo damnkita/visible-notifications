@@ -5,8 +5,9 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from sqlmodel import SQLModel
-
+from domain.base import Base
+from domain.event import Event  # noqa: F401
+from domain.notification import Notification  # noqa: F401
 from infrastructure.settings import settings
 
 # this is the Alembic Config object, which provides
@@ -20,23 +21,13 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = SQLModel.metadata
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+target_metadata = Base.metadata
 
 
 config.set_main_option(
     "sqlalchemy.url",
     str(settings.database_url_async),
 )
-
-from domain.event import Event  # noqa: E402, F401
-from domain.notification import Notification  # noqa: E402, F401
 
 
 def run_migrations_offline() -> None:
