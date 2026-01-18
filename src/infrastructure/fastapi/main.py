@@ -1,10 +1,8 @@
 from contextlib import asynccontextmanager
 from http import HTTPStatus
 
-from dishka import make_async_container
+from dishka import Provider, make_async_container
 from dishka.integrations.fastapi import setup_dishka
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 
 from app.app_provider import AppProvider
 from app.exceptions import (
@@ -12,37 +10,47 @@ from app.exceptions import (
     InternalApplicationException,
     WebApplicationException,
 )
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from infrastructure.database.migrations.apply_migrations import update_head
+from infrastructure.env_config import Env, EnvConfig, SettingsProvider
 from infrastructure.infrastructure_provider import InfrastructureProvider
-from infrastructure.settings import Env, SettingsProvider
-from presentation.api.health.health_handlers import router as health_router
+from presentation.api.events import events_router
+from presentation.api.health import health_router
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Migrations start")
-    update_head()
-    print("Migrations end")
-    yield
-    await app.state.dishka_container.close()
+def make_lifespan(envconfig: EnvConfig):
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        print("Migrations start")
+        update_head(envconfig)
+        print("Migrations end")  # todo replace with structured logging
+        yield
+        await app.state.dishka_container.close()
+
+    return lifespan
 
 
-def create_api() -> FastAPI:
+def get_dependencies_providers() -> list[Provider]:
+    return [SettingsProvider(), AppProvider(), InfrastructureProvider()]
+
+
+def create_api(envconfig: EnvConfig, dependencies_providers: list[Provider]) -> FastAPI:
+    lifespan = make_lifespan(envconfig)
+
     app = FastAPI(lifespan=lifespan)
+
     app.include_router(health_router)
+    app.include_router(events_router)
 
-    settings_provider = SettingsProvider()
-
-    container = make_async_container(
-        settings_provider, AppProvider(), InfrastructureProvider()
-    )
+    container = make_async_container(*dependencies_providers)
     setup_dishka(container, app)
 
-    settings = settings_provider.settings()
-
     @app.exception_handler(ApplicationException)
-    async def exception_handler(request: Request, e: InternalApplicationException):
-        if settings.env is Env.PROD and isinstance(e, InternalApplicationException):
+    async def exception_handler(
+        e: InternalApplicationException,
+    ):
+        if envconfig.env is Env.PROD and isinstance(e, InternalApplicationException):
             return JSONResponse(
                 content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -61,7 +69,7 @@ def create_api() -> FastAPI:
 
     @app.exception_handler(Exception)
     async def uncaught_exception_handler(request: Request, e: Exception):
-        print("UNHANDLED EXCEPTION!")
+        print("UNHANDLED EXCEPTION!")  # todo replace with a structured logger
         return JSONResponse(
             content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

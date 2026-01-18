@@ -22,7 +22,7 @@ class InternalApplicationException(ApplicationException):
 
 class WebApplicationException(ApplicationException):
     """
-    Application exceptions that could have web representation
+    Application exceptions that could have a web representation
     """
 
     def __init__(self, code: str, reason: str, status: HTTPStatus) -> None:

@@ -4,7 +4,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 
-from app.health.readiness_check_usecase import ReadinessCheckUseCase
+from app.health import ReadinessCheckUseCase
 
 router = APIRouter()
 

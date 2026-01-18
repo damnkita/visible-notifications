@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, provide
 
-from app.health.readiness_check_usecase import ReadinessCheckUseCase, ReadyChecker
+from app.health import ReadinessCheckUseCase, ReadyChecker
 
 
 class AppProvider(Provider):

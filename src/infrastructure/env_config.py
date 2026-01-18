@@ -12,7 +12,7 @@ class Env(str, Enum):
     TEST = "test"
 
 
-class APISettings(BaseSettings):
+class EnvConfig(BaseSettings):
     env: Env = Field(default=Env.PROD)
     database_url_sync: PostgresDsn = PostgresDsn(
         "postgresql+psycopg2://postgres:postgres@localhost:5432/postgres"
@@ -22,10 +22,7 @@ class APISettings(BaseSettings):
     )
 
 
-settings = APISettings()
-
-
 class SettingsProvider(Provider):
     @provide(scope=Scope.APP)
-    def settings(self) -> APISettings:
-        return settings
+    def settings(self) -> EnvConfig:
+        return EnvConfig()

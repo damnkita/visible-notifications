@@ -3,8 +3,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine as sqla_create_async_engine,
 )
 
-from infrastructure.settings import APISettings
 
-
-def create_async_engine(settings: APISettings) -> AsyncEngine:
-    return sqla_create_async_engine(str(settings.database_url_async))
+def create_async_engine(database_url_async: str) -> AsyncEngine:
+    return sqla_create_async_engine(database_url_async)

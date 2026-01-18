@@ -1,7 +1,7 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.health.exceptions import DependencyNotReadyException
+from app.health import DependencyNotReadyException
 
 
 class PostgresDBChecker:
