@@ -1,0 +1,92 @@
+# SYNTAX:
+# This file defines rules that trigger notifications based on incoming events.
+# Each rule specifies when and how to send a notification defined in notifications.yaml.
+#
+# rules:                              - Root list containing all notification rule definitions
+#   - notification_type:              - References a notification type from notifications.yaml
+#     event_type:                     - The event that triggers this rule (e.g., "payment_failed", "signup_completed")
+#     delay_seconds:                  - How long to wait before sending (0 = immediate, 300 = 5 minutes)
+#     recheck:                        - Boolean: if true, re-evaluate event_conditions after delay
+#     debounce_period_seconds:        - Time window for debouncing (86400 = 1 day)
+#     debounce_limit:                 - Max notifications to send within debounce_period (null = no limit)
+#     debounce_calendar_day:          - If true, debounce_period resets at midnight (requires debounce_period)
+#     event_conditions:               - List of conditions that must be met to trigger notification
+#       - property_match:             - Match against event properties or user_traits
+#           property_xpath:           - Path to property (e.g., "properties.amount", "user_traits.country")
+#           value:                    - Expected value to match against
+#           operator:                 - Comparison operator: "EQ" (equals), "GTE" (>=), "LTE" (<=), "GT" (>), "LT" (<)
+#                                       * "EQ" casts both sides to strings
+#                                       * "GTE"/"LTE"/"GT"/"LT" cast both sides to floats
+#         event_proximity:            - Check if another event occurred nearby in time
+#           event_type:               - The other event type to look for
+#           time_proximity:           - Time window to search (e.g., "1d", "24h", "30m", or seconds as int)
+#           event_conditions:         - Nested conditions for the proximate event (usually [])
+#         event_logic:                - Combine multiple conditions with logic (AND/OR/NOT) - not yet implemented
+#
+# NOTE: For each condition, set unused fields to null. At least one of property_match, event_proximity,
+#       or event_logic should be non-null per condition.
+
+rules:
+  # If signup_completed AND user_traits.marketing_opt_in == true, send the "WELCOME_EMAIL".
+  - notification_type: WELCOME_EMAIL
+    event_type: signup_completed
+    delay_seconds: 0
+    recheck: false
+    debounce_period_seconds: 0
+    debounce_limit: 1
+    debounce_calendar_day: false
+    event_conditions:
+      - property_match:
+          property_xpath: user_traits.marketing_opt_in
+          value: "true"
+          operator: "EQ"
+        event_proximity: null
+        event_logic: null
+
+  # If link_bank_success within 24h of signup_completed, send "BANK_LINK_NUDGE_SMS".
+  - notification_type: BANK_LINK_NUDGE_SMS
+    event_type: link_bank_success
+    delay_seconds: 0
+    recheck: false
+    debounce_period_seconds: 0
+    debounce_limit: 0
+    debounce_calendar_day: false
+    event_conditions:
+      - property_match: null
+        event_proximity:
+          event_type: signup_completed
+          time_proximity: 1d
+          event_conditions: []
+        event_logic: null
+
+  # If payment_failed with failure_reason == "INSUFFICIENT_FUNDS", send "INSUFFICIENT_FUNDS_EMAIL", BUT only once per user per calendar day.
+  - notification_type: INSUFFICIENT_FUNDS_EMAIL
+    event_type: payment_failed
+    delay_seconds: 0
+    recheck: false
+    debounce_period_seconds: 86400
+    debounce_limit: 1
+    debounce_calendar_day: true
+    event_conditions:
+      - property_match:
+          property_xpath: properties.failure_reason
+          value: "INSUFFICIENT_FUNDS"
+          operator: "EQ"
+        event_proximity: null
+        event_logic: null
+
+  # If payment_failed with attempt_number >= 3, escalate to "HIGH_RISK_ALERT" (internal only) so that CX can intervene.
+  - notification_type: HIGH_RISK_ALERT
+    event_type: payment_failed
+    delay_seconds: 0
+    recheck: false
+    debounce_period_seconds: 0
+    debounce_limit: 0
+    debounce_calendar_day: false
+    event_conditions:
+      - property_match:
+          property_xpath: properties.attempt_number
+          value: "3"
+          operator: "GTE"
+        event_proximity: null
+        event_logic: null

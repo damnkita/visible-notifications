@@ -11,3 +11,4 @@ class Notification:
     type: str
     private: bool
     channel: NotificationChannel
+    text: str

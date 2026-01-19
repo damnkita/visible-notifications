@@ -1,10 +1,43 @@
+# SYNTAX:
+# This repository loads notification rules from src/notification_rules.yml at startup.
+#
+# Parsing logic:
+# 1. Load YAML from ./src/notification_rules.yml (fatal error if missing or malformed)
+# 2. Extract "rules" list (fatal error if not a list)
+# 3. For each rule item, parse:
+#    - notification_type:         str - References notification from notifications.yaml
+#    - event_type:                str - Event that triggers this rule
+#    - delay_seconds:             int|null - Delay before sending (parsed to timedelta)
+#    - recheck:                   bool - Whether to re-evaluate conditions after delay
+#    - debounce_period_seconds:   int|null - Time window for debouncing (parsed to timedelta)
+#    - debounce_limit:            int|null - Max sends within debounce period
+#    - debounce_calendar_day:     bool - Whether debounce period resets at midnight
+#    - event_conditions:          list - List of EventCondition objects
+#      Each condition can have:
+#        * property_match:        PropertyMatch object (xpath, value, operator)
+#                                 - Operators: EQ (string cast), GTE/LTE/GT/LT (float cast)
+#        * event_proximity:       EventProximity object (event_type, time_proximity, conditions)
+#                                 - time_proximity supports: int (seconds), or string ("1d", "24h", "30m")
+#                                 - Uses pytimeparse2 for human-readable time parsing
+#        * event_logic:           EventLogic object (AND/OR/NOT) - not yet implemented
+# 4. Store in memory as NotificationRule domain objects
+# 5. Provide async methods: get_all() and get_by_event_type(event_type)
+#
+# Error handling: Any parse error raises ValueError with descriptive message and rule index
+
 from datetime import timedelta
 from pathlib import Path
 
 import yaml
+from pytimeparse2 import parse
 
 from domain import NotificationRule
-from domain.notification_rule import EventCondition, PropertyMatch, PropertyOperator
+from domain.notification_rule import (
+    EventCondition,
+    EventProximity,
+    PropertyMatch,
+    PropertyOperator,
+)
 
 
 class StaticNotificationRuleRepository:
@@ -13,7 +46,7 @@ class StaticNotificationRuleRepository:
         self._load_rules()
 
     def _load_rules(self) -> None:
-        yaml_path = Path("./notification_rules.yml")
+        yaml_path = Path("./src/notification_rules.yml")
 
         if not yaml_path.exists():
             raise FileNotFoundError(
@@ -73,26 +106,51 @@ class StaticNotificationRuleRepository:
         )
 
     def _parse_event_condition(self, data: dict) -> EventCondition:
-        # For now, only support property_match (keeping it simple)
-        if "property_match" in data:
+        property_match = None
+        event_proximity = None
+        event_logic = None
+
+        # Parse property_match
+        if data.get("property_match"):
             pm_data = data["property_match"]
             property_match = PropertyMatch(
                 property_xpath=pm_data["property_xpath"],
                 value=pm_data["value"],
                 operator=PropertyOperator[pm_data["operator"].upper()],
             )
-            return EventCondition(
-                property_match=property_match,
-                event_proximity=None,
-                event_logic=None,
+
+        # Parse event_proximity
+        if data.get("event_proximity"):
+            ep_data = data["event_proximity"]
+            time_prox = ep_data.get("time_proximity")
+
+            # Parse time_proximity (can be "1d", "24h", or seconds)
+            time_proximity_td = None
+            if time_prox:
+                if isinstance(time_prox, (int, float)):
+                    time_proximity_td = timedelta(seconds=time_prox)
+                elif isinstance(time_prox, str):
+                    seconds = parse(time_prox)
+                    if seconds is None:
+                        raise ValueError(f"Invalid time format: {time_prox}")
+                    time_proximity_td = timedelta(seconds=seconds)
+
+            event_proximity = EventProximity(
+                event_type=ep_data["event_type"],
+                time_proximity=time_proximity_td,
+                event_conditions=ep_data.get("event_conditions", []),
             )
-        else:
-            # Empty condition
-            return EventCondition(
-                property_match=None,
-                event_proximity=None,
-                event_logic=None,
-            )
+
+        # Parse event_logic (not implemented yet, placeholder)
+        if data.get("event_logic"):
+            # TODO: Implement event_logic parsing when needed
+            pass
+
+        return EventCondition(
+            property_match=property_match,
+            event_proximity=event_proximity,
+            event_logic=event_logic,
+        )
 
     async def get_all(self) -> list[NotificationRule]:
         return self._rules.copy()

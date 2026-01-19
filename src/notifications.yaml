@@ -1,0 +1,73 @@
+# SYNTAX:
+# This file defines notification templates that can be triggered by events.
+# Each notification specifies what message to send and through which channel.
+#
+# notifications:              - Root list containing all notification definitions
+#   - type:                   - Unique identifier for this notification (referenced in notification_rules.yml)
+#     private:                - Boolean: true = internal only (not sent to users), false = user-facing
+#     channel:                - Delivery channel: "email", "sms", or "pidgeon"
+#     text:                   - The message content/template
+#                               * Use | for multi-line text (preserves line breaks)
+#                               * Use {{variable_name}} for template variables that will be replaced with event data
+#                               * Available variables: user_id, email, country, amount, currency, event_type, etc.
+#                               * Variables come from event properties and user_traits
+
+notifications:
+  - type: WELCOME_EMAIL
+    private: false
+    channel: email
+    text: |
+      Welcome to our payment platform!
+
+      Hi there,
+
+      We're excited to have you on board. Your account is now active and ready to use.
+
+      To get started, link your bank account and you'll be able to send and receive payments instantly.
+
+      If you have any questions, our support team is here to help.
+
+      Best regards,
+      The Payment Team
+
+  - type: BANK_LINK_NUDGE_SMS
+    private: false
+    channel: sms
+    text: "Great! Your bank account is linked. You're ready to pay your rent now! Start your first payment: [Link]"
+
+  - type: INSUFFICIENT_FUNDS_EMAIL
+    private: false
+    channel: email
+    text: |
+      Payment Failed - Insufficient Funds
+
+      Hi,
+
+      We tried to process your payment of {{amount}} {{currency}}, but it failed due to insufficient funds in your account.
+
+      Please add funds to your account and try again. Your payment will remain pending for the next 24 hours.
+
+      If you need help, please contact our support team.
+
+      Best regards,
+      The Payment Team
+
+  - type: HIGH_RISK_ALERT
+    private: true
+    channel: email
+    text: |
+      [INTERNAL] High Risk User Activity Detected
+
+      User ID: {{user_id}}
+      Risk Segment: {{risk_segment}}
+      Event: {{event_type}}
+      Timestamp: {{event_timestamp}}
+
+      This is an automated alert for internal review. Please investigate this user's recent activity.
+
+      Details:
+      - Email: {{email}}
+      - Country: {{country}}
+      - Recent Activity: {{recent_events}}
+
+      Automated Risk Alert System
