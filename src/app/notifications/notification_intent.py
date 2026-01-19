@@ -6,3 +6,4 @@ from datetime import timedelta
 class NotificationIntent:
     notification_type: str
     delay: timedelta | None
+    debounced_because: str | None

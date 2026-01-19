@@ -14,8 +14,3 @@ class NotificationHistoryRecordRepository(Protocol):
         timerange: timedelta,
     ) -> int: ...
 
-    async def find_by_user_within_time(
-        self,
-        user_id: str,
-        timerange: timedelta,
-    ) -> list[NotificationHistoryRecord]: ...

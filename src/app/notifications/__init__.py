@@ -1,3 +1,3 @@
-from .tasks import send_notification
+from .trigger_notifications_use_case import TriggerNotificationsUseCase
 
-__all__ = ["send_notification"]
+__all__ = ["TriggerNotificationsUseCase"]

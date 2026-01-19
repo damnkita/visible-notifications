@@ -11,11 +11,17 @@ from sqlalchemy.ext.asyncio import (
 from app.health.readiness_check_usecase import DatabaseChecker
 from app.logging import Logger
 from app.persistence.event_repository import EventRepository
+from app.persistence.notification_history_record_repository import (
+    NotificationHistoryRecordRepository,
+)
 from app.persistence.notification_repository import NotificationRepository
 from app.persistence.notification_rule_repository import NotificationRuleRepository
 from app.queue import EventQueue
 from infrastructure.database.persistence.sqla_event_repository import (
     SQLAEventRepository,
+)
+from infrastructure.database.persistence.sqla_notification_history_record_repository import (
+    SQLANotificationHistoryRecordRepository,
 )
 from infrastructure.database.postgres.postgres_db_checker import PostgresDBChecker
 from infrastructure.env_config import EnvConfig
@@ -53,6 +59,11 @@ class InfrastructureProvider(Provider):
 
     repositories = (
         provide(SQLAEventRepository, provides=EventRepository, scope=Scope.REQUEST)
+        + provide(
+            SQLANotificationHistoryRecordRepository,
+            provides=NotificationHistoryRecordRepository,
+            scope=Scope.REQUEST,
+        )
         + provide(
             StaticNotificationRepository,
             provides=NotificationRepository,

@@ -2,6 +2,9 @@ from glom import glom
 
 from app.notifications.notification_intent import NotificationIntent
 from app.persistence.event_repository import EventRepository
+from app.persistence.notification_history_record_repository import (
+    NotificationHistoryRecordRepository,
+)
 from domain import Event, Notification, NotificationRule
 from domain.notification_rule import EventCondition, LogicOperator, PropertyOperator
 
@@ -10,10 +13,12 @@ class NotificationRulesRelay:
     def __init__(
         self,
         event_repo: EventRepository,
+        notification_history_repo: NotificationHistoryRecordRepository,
         notification_rules: list[NotificationRule],
         notifications: list[Notification],
     ) -> None:
         self._event_repo = event_repo
+        self._notification_history_repo = notification_history_repo
         self._notification_rules_triggers: dict[str, list[NotificationRule]] = {
             rule.event_type: [] for rule in notification_rules
         }
@@ -34,21 +39,51 @@ class NotificationRulesRelay:
         if len(rules) == 0:
             return []
 
-        intents = []
+        intents, debounced_intents = [], []
+
         # for every rule that references this event type, let's check if conditions allow sending the notification
         # (one event can trigger several notifications)
         for rule in rules:
+            # delays
+            if rule.delay is not None:
+                raise NotImplementedError(
+                    "Sorry, for now delayed notification is not supported"
+                )
+
+            # conditions check
             match = await self._check_event_against_conditions(
                 event, rule.event_conditions
             )
-            if match:
-                intents.append(
-                    NotificationIntent(
-                        notification_type=rule.notification_type, delay=rule.delay
-                    )
+            if not match:
+                continue
+
+            # frequency debounce
+            if rule.debounce_limit is not None and rule.debounce_period is not None:
+                sent_count = await self._notification_history_repo.count_by_user_and_type_within_time(
+                    user_id=event.user_id,
+                    notification_type=rule.notification_type,
+                    timerange=rule.debounce_period,
                 )
 
-        return intents
+                if sent_count >= rule.debounce_limit:
+                    debounced_intents.append(
+                        NotificationIntent(
+                            notification_type=rule.notification_type,
+                            delay=rule.delay,
+                            debounced_because=f"Notification {rule.notification_type} has occured {sent_count} times which is GTE than {rule.debounce_limit}",
+                        )
+                    )
+                    continue
+
+            intents.append(
+                NotificationIntent(
+                    notification_type=rule.notification_type,
+                    delay=rule.delay,
+                    debounced_because=None,
+                )
+            )
+
+        return intents + debounced_intents
 
     async def _check_event_against_conditions(
         self,

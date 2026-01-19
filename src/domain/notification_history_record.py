@@ -1,7 +1,8 @@
+from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from sqlalchemy import Integer, String, Uuid
+from sqlalchemy import DateTime, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from domain.base import Base
@@ -24,3 +25,4 @@ class NotificationHistoryRecord(Base):
     status: Mapped[NotificationStatus] = mapped_column(String)
     retries: Mapped[int] = mapped_column(Integer)
     suppressed_because: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
