@@ -13,14 +13,14 @@ docker compose up -d
 
 This spins up:
 
-| Service        | URL                              | Description                          |
-|----------------|----------------------------------|--------------------------------------|
-| **API**        | http://localhost:8000            | Receives events                      |
-| **Liveness**   | http://localhost:8000/healthz/live  | Health check                      |
-| **Readiness**  | http://localhost:8000/healthz/ready | Dependency check                  |
-| **Worker**     | -                                | Processes events, triggers notifications |
-| **PostgreSQL** | localhost:5432                   | Stores events and notification history |
-| **Redis**      | localhost:6379                   | Message queue for async processing |
+| Service        | URL                                 | Description                              |
+| -------------- | ----------------------------------- | ---------------------------------------- |
+| **API**        | http://localhost:8000               | Receives events                          |
+| **Liveness**   | http://localhost:8000/healthz/live  | Health check                             |
+| **Readiness**  | http://localhost:8000/healthz/ready | Dependency check                         |
+| **Worker**     | -                                   | Processes events, triggers notifications |
+| **PostgreSQL** | localhost:5432                      | Stores events and notification history   |
+| **Redis**      | localhost:6379                      | Message queue for async processing       |
 
 ### 2. Open Audit Endpoint
 
@@ -190,6 +190,7 @@ Please see notification_rules.yml file to understand the syntax (there's a hint)
 - Moderately high load (~1k rps)
 - Notification rules changed via code modification for now (admin UI could be added in future)
 - The configuration must be easily modifiable
+  - Also flexible! That's why there are additional rule properties, such as delay, recheck, event_logic or property operators for the xpath search (some.path could be EQ, NEQ, GTE, LTE (etc) than a property's value)
 - When the event amout becomes really unimaginable, we can introduce partitioning or OLAP DB, but until then it's fine
 
 ## Trade Offs
