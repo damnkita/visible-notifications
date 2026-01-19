@@ -1,30 +1,3 @@
-# SYNTAX:
-# This repository loads notification rules from src/notification_rules.yml at startup.
-#
-# Parsing logic:
-# 1. Load YAML from ./src/notification_rules.yml (fatal error if missing or malformed)
-# 2. Extract "rules" list (fatal error if not a list)
-# 3. For each rule item, parse:
-#    - notification_type:         str - References notification from notifications.yaml
-#    - event_type:                str - Event that triggers this rule
-#    - delay_seconds:             int|null - Delay before sending (parsed to timedelta)
-#    - recheck:                   bool - Whether to re-evaluate conditions after delay
-#    - debounce_period_seconds:   int|null - Time window for debouncing (parsed to timedelta)
-#    - debounce_limit:            int|null - Max sends within debounce period
-#    - debounce_calendar_day:     bool - Whether debounce period resets at midnight
-#    - event_conditions:          list - List of EventCondition objects
-#      Each condition can have:
-#        * property_match:        PropertyMatch object (xpath, value, operator)
-#                                 - Operators: EQ (string cast), GTE/LTE/GT/LT (float cast)
-#        * event_proximity:       EventProximity object (event_type, time_proximity, conditions)
-#                                 - time_proximity supports: int (seconds), or string ("1d", "24h", "30m")
-#                                 - Uses pytimeparse2 for human-readable time parsing
-#        * event_logic:           EventLogic object (AND/OR/NOT) - not yet implemented
-# 4. Store in memory as NotificationRule domain objects
-# 5. Provide async methods: get_all() and get_by_event_type(event_type)
-#
-# Error handling: Any parse error raises ValueError with descriptive message and rule index
-
 from datetime import timedelta
 from pathlib import Path
 
@@ -46,7 +19,7 @@ class StaticNotificationRuleRepository:
         self._load_rules()
 
     def _load_rules(self) -> None:
-        yaml_path = Path("./src/notification_rules.yml")
+        yaml_path = Path(__file__).parent / "../../notification_rules.yml"
 
         if not yaml_path.exists():
             raise FileNotFoundError(
@@ -133,6 +106,7 @@ class StaticNotificationRuleRepository:
                     seconds = parse(time_prox)
                     if seconds is None:
                         raise ValueError(f"Invalid time format: {time_prox}")
+                    assert isinstance(seconds, int)
                     time_proximity_td = timedelta(seconds=seconds)
 
             event_proximity = EventProximity(

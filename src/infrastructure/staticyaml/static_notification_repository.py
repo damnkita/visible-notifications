@@ -1,19 +1,3 @@
-# SYNTAX:
-# This repository loads notification templates from src/notifications.yaml at startup.
-#
-# Parsing logic:
-# 1. Load YAML from ./src/notifications.yaml (fatal error if missing or malformed)
-# 2. Extract "notifications" list (fatal error if not a list)
-# 3. For each notification item:
-#    - type:    str - Notification identifier (must be unique)
-#    - private: bool - Whether this is internal-only (true) or user-facing (false)
-#    - channel: str - Must be "email", "sms", or "pidgeon" (validated against NotificationChannel enum)
-#    - text:    str - Message template (optional, defaults to empty string)
-# 4. Store in memory as Notification domain objects
-# 5. Provide async methods: get_all() and get_by_type(notification_type)
-#
-# Error handling: Any parse error raises ValueError with descriptive message and index
-
 from pathlib import Path
 
 import yaml
@@ -28,7 +12,7 @@ class StaticNotificationRepository:
         self._load_notifications()
 
     def _load_notifications(self) -> None:
-        yaml_path = Path("./src/notifications.yaml")
+        yaml_path = Path(__file__).parent / "../../notifications.yaml"
 
         if not yaml_path.exists():
             raise FileNotFoundError(

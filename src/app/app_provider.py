@@ -1,5 +1,6 @@
 from dishka import Provider, Scope, provide
 
+from app.audit import GetUserAuditUseCase
 from app.events import SaveEventsUseCase
 from app.health import ReadinessCheckUseCase, ReadyChecker
 from app.notifications.trigger_notifications_use_case import (
@@ -14,4 +15,5 @@ class AppProvider(Provider):
         + provide(ReadyChecker)
         + provide(SaveEventsUseCase)
         + provide(TriggerNotificationsUseCase)
+        + provide(GetUserAuditUseCase)
     )

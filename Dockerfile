@@ -23,6 +23,12 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app/src
 
+FROM runtime AS api
+
 EXPOSE 8000
 
 CMD ["fastapi", "run", "--entrypoint", "entrypoint.api:app"]
+
+FROM runtime AS taskiq
+
+CMD ["taskiq", "worker", "entrypoint.queue:broker"]

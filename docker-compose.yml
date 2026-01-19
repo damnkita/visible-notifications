@@ -1,10 +1,28 @@
 services:
-  app:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
+      target: api
     ports:
       - "8000:8000"
+    environment:
+      - DATABASE_URL_SYNC=postgresql+psycopg2://postgres:postgres@db:5432/postgres
+      - DATABASE_URL_ASYNC=postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      - REDIS_URL=redis://redis:6379/0
+      - ENV=dev
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: taskiq
     environment:
       - DATABASE_URL_SYNC=postgresql+psycopg2://postgres:postgres@db:5432/postgres
       - DATABASE_URL_ASYNC=postgresql+asyncpg://postgres:postgres@db:5432/postgres
@@ -22,6 +40,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
+      - ENV=dev
     ports:
       - "5432:5432"
     healthcheck:

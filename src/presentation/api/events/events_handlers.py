@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from http import HTTPStatus
 from typing import Any
@@ -10,6 +11,8 @@ from pydantic import BaseModel
 
 from app.events import SaveEventsRequest, SaveEventsUseCase
 from domain import Event
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -48,7 +51,8 @@ async def post(
         try:
             dto = EventDTO.model_validate(event)
             domain_events.append(dto.to_domain())
-        except ValueError:
+        except ValueError as e:
+            logger.warning("Event validation failed", extra={"event": event, "error": str(e)})
             continue
 
     result = await save_events.handle(SaveEventsRequest(events=domain_events))

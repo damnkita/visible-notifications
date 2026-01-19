@@ -20,8 +20,9 @@ class SQLAEventRepository:
         event_type: str,
         user_id: str,
         timerange: timedelta,
+        event_timestamp: datetime,
     ) -> list[Event]:
-        threshold_datetime = datetime.now(UTC) - timerange
+        threshold_datetime = event_timestamp - timerange
         threshold_date = threshold_datetime.date()
 
         stmt = (
@@ -33,6 +34,21 @@ class SQLAEventRepository:
                 Event.event_timestamp >= threshold_datetime,
             )
             .order_by(Event.event_timestamp.desc())
+        )
+
+        result = await self.async_session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_recent_by_user(
+        self,
+        user_id: str,
+        limit: int = 50,
+    ) -> list[Event]:
+        stmt = (
+            select(Event)
+            .where(Event.user_id == user_id)
+            .order_by(Event.event_timestamp.desc())
+            .limit(limit)
         )
 
         result = await self.async_session.execute(stmt)

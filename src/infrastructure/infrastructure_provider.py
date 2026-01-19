@@ -42,7 +42,7 @@ class InfrastructureProvider(Provider):
 
     @provide(scope=Scope.APP)
     def get_async_engine(self, settings: EnvConfig) -> AsyncEngine:
-        return create_async_engine(str(settings.database_url_async))
+        return create_async_engine(str(settings.database_url_async), echo=True)
 
     @provide(scope=Scope.APP)
     def get_session_factory(

@@ -14,3 +14,9 @@ class NotificationHistoryRecordRepository(Protocol):
         timerange: timedelta,
     ) -> int: ...
 
+    async def find_recent_by_user(
+        self,
+        user_id: str,
+        limit: int = 50,
+    ) -> list[NotificationHistoryRecord]: ...
+

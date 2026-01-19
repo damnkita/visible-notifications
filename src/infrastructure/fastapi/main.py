@@ -15,6 +15,7 @@ from app.exceptions import (
 from infrastructure.database.migrations.apply_migrations import update_head
 from infrastructure.env_config import Env, EnvConfig
 from infrastructure.logging import configure_logging
+from presentation.api.audit import audit_router
 from presentation.api.events import events_router
 from presentation.api.health import health_router
 
@@ -40,6 +41,7 @@ def create_api(envconfig: EnvConfig, dependencies_providers: list[Provider]) -> 
 
     app.include_router(health_router)
     app.include_router(events_router)
+    app.include_router(audit_router)
 
     container = make_async_container(*dependencies_providers)
     setup_dishka(container, app)

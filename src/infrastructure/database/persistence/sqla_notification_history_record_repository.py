@@ -30,3 +30,18 @@ class SQLANotificationHistoryRecordRepository:
 
         result = await self.async_session.execute(stmt)
         return result.scalar() or 0
+
+    async def find_recent_by_user(
+        self,
+        user_id: str,
+        limit: int = 50,
+    ) -> list[NotificationHistoryRecord]:
+        stmt = (
+            select(NotificationHistoryRecord)
+            .where(NotificationHistoryRecord.user_id == user_id)
+            .order_by(NotificationHistoryRecord.created_at.desc())
+            .limit(limit)
+        )
+
+        result = await self.async_session.execute(stmt)
+        return list(result.scalars().all())

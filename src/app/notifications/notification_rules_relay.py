@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from glom import glom
 
 from app.notifications.notification_intent import NotificationIntent
@@ -58,11 +59,21 @@ class NotificationRulesRelay:
                 continue
 
             # frequency debounce
-            if rule.debounce_limit is not None and rule.debounce_period is not None:
+            if rule.debounce_limit is not None and rule.debounce_limit > 0:
+                offset = timedelta(weeks=52 * 100)  # 100 years hack :)
+                if rule.debounce_period is not None:
+                    offset = rule.debounce_period
+                if (
+                    rule.debounce_period == timedelta(days=1)
+                    and rule.debounce_calendar_day
+                ):
+                    offset = datetime.now(UTC) - datetime.now(UTC).replace(
+                        hour=0, minute=0, second=0, microsecond=0
+                    )
                 sent_count = await self._notification_history_repo.count_by_user_and_type_within_time(
                     user_id=event.user_id,
                     notification_type=rule.notification_type,
-                    timerange=rule.debounce_period,
+                    timerange=offset,
                 )
 
                 if sent_count >= rule.debounce_limit:
@@ -111,9 +122,13 @@ class NotificationRulesRelay:
                 event_dict = event.to_dict()
 
                 # EQ
-                if condition.property_match.operator is PropertyOperator.EQ and str(
-                    condition.property_match.value
-                ) != str(glom(event_dict, condition.property_match.property_xpath)):
+                if (
+                    condition.property_match.operator is PropertyOperator.EQ
+                    and str(condition.property_match.value).lower()
+                    != str(
+                        glom(event_dict, condition.property_match.property_xpath)
+                    ).lower()
+                ):
                     return False
 
                 # GTE
@@ -129,6 +144,7 @@ class NotificationRulesRelay:
                     condition.event_proximity.event_type,
                     event.user_id,
                     condition.event_proximity.time_proximity,
+                    event.event_timestamp,
                 )
 
                 if len(events_within_range) == 0:
