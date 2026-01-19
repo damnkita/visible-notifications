@@ -1,7 +1,6 @@
+from infrastructure import dependencies_providers
 from infrastructure.env_config import EnvConfig
-from infrastructure.fastapi.main import create_api, get_dependencies_providers
-
-dependences_providers = get_dependencies_providers()
+from infrastructure.fastapi.main import create_api
 
 # meant to run with fastapi run etc
-app = create_api(EnvConfig(), dependences_providers)
+app = create_api(EnvConfig(), dependencies_providers)

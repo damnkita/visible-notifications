@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
 from infrastructure.env_config import EnvConfig
-from infrastructure.fastapi.main import create_api, get_dependencies_providers
+from infrastructure.fastapi.main import create_api
 
 
 @pytest.fixture(scope="package")
@@ -16,8 +16,6 @@ def client(
     async_db_engine: AsyncEngine,
     test_db_container: PostgresContainer,
 ) -> Generator[TestClient]:
-    dependencies_providers = get_dependencies_providers()
-
     class MockDBEngineProvider(Provider):
         @provide(scope=Scope.APP)
         def get_mock_db_engine(self) -> AsyncEngine:
@@ -40,6 +38,8 @@ def client(
     os.environ["DATABASE_URL_ASYNC"] = test_db_container.get_connection_url(
         driver="asyncpg"
     )
+
+    from infrastructure import dependencies_providers
 
     test_providers = dependencies_providers + [MockDBEngineProvider()]
 

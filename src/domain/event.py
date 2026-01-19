@@ -18,3 +18,9 @@ class Event(Base):
     event_date: Mapped[date] = mapped_column(Date, primary_key=True)
     properties: Mapped[dict] = mapped_column(JSON)
     user_traits: Mapped[dict] = mapped_column(JSON)
+
+    def to_dict(self) -> dict:
+        return {
+            "properties": self.properties,
+            "user_traits": self.user_traits,
+        }

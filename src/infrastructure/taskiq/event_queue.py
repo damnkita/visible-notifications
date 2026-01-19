@@ -17,4 +17,4 @@ def _event_to_dict(event: Event) -> dict:
 class TaskiqEventQueue:
     async def events_received(self, events: list[Event]) -> None:
         events_as_dicts = [_event_to_dict(event) for event in events]
-        await events_received.kiq(events_as_dicts)
+        await events_received.kiq(events_as_dicts)  # type: ignore # kiq signature suddenly does not play well with dishka injections

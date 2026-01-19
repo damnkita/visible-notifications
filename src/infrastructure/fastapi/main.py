@@ -3,18 +3,18 @@ from http import HTTPStatus
 
 from dishka import Provider, make_async_container
 from dishka.integrations.fastapi import setup_dishka
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from loguru import logger
 
-from app.app_provider import AppProvider
 from app.exceptions import (
     ApplicationException,
     InternalApplicationException,
     WebApplicationException,
 )
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from infrastructure.database.migrations.apply_migrations import update_head
-from infrastructure.env_config import Env, EnvConfig, SettingsProvider
-from infrastructure.infrastructure_provider import InfrastructureProvider
+from infrastructure.env_config import Env, EnvConfig
+from infrastructure.logging import configure_logging
 from presentation.api.events import events_router
 from presentation.api.health import health_router
 
@@ -22,20 +22,18 @@ from presentation.api.health import health_router
 def make_lifespan(envconfig: EnvConfig):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        print("Migrations start")
+        logger.info("Migrations starting")
         update_head(envconfig)
-        print("Migrations end")  # todo replace with structured logging
+        logger.info("Migrations completed")
         yield
         await app.state.dishka_container.close()
 
     return lifespan
 
 
-def get_dependencies_providers() -> list[Provider]:
-    return [SettingsProvider(), AppProvider(), InfrastructureProvider()]
-
-
 def create_api(envconfig: EnvConfig, dependencies_providers: list[Provider]) -> FastAPI:
+    configure_logging(envconfig.env, service_name="visible-notify-api")
+
     lifespan = make_lifespan(envconfig)
 
     app = FastAPI(lifespan=lifespan)
@@ -69,7 +67,9 @@ def create_api(envconfig: EnvConfig, dependencies_providers: list[Provider]) -> 
 
     @app.exception_handler(Exception)
     async def uncaught_exception_handler(request: Request, e: Exception):
-        print("UNHANDLED EXCEPTION!")  # todo replace with a structured logger
+        logger.exception(
+            "Unhandled exception", path=request.url.path, method=request.method
+        )
         if envconfig.env is Env.PROD:
             return JSONResponse(
                 content={"code": "E_ERR_INTERNAL", "reason": "Internal error"},
